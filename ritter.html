@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Node</title>
+<style>
+body {
+  margin: 0;
+  background: #05080a;
+  color: #cfffff;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.terminal {
+  width: 640px;
+  height: 480px;
+  background: #071317;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 0 40px rgba(67, 226, 238, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 22px;
+}
+
+.log span.user { 
+  display: block; 
+  margin-top: 8px;
+  margin-bottom: 6px; 
+}
+
+.log span.ritter-name { 
+  color: #43e2ee; 
+  text-shadow: 0 0 8px rgba(67,226,238,0.6);
+  opacity: 0;
+  transition: opacity 0.15s ease-in; /* faster fade */
+}
+
+.log span.ritter-text { 
+  color: #cfffff;
+  display: inline; 
+}
+
+.log span.system { 
+  color: #6f9fa3; 
+  display: inline; 
+}
+
+.input-line {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+}
+
+.prompt { margin-right: 6px; color: #43e2ee; }
+
+.input-text { flex: 1; min-height: 1.2em; }
+
+/* Scrollbar styling */
+.log::-webkit-scrollbar { width: 10px; }
+.log::-webkit-scrollbar-track { background: #071317; border-radius: 10px; }
+.log::-webkit-scrollbar-thumb { background: #43e2ee; border-radius: 10px; }
+.log::-webkit-scrollbar-thumb:hover { background: #6ff0ff; }
+.log { scrollbar-width: thin; scrollbar-color: #43e2ee #071317; }
+</style>
+</head>
+<body>
+<div class="terminal">
+  <div class="log" id="log">
+    <span class="system">[SYSTEM]</span> Unsecured access node detected.
+    <span class="system">[SYSTEM]</span> Input channel available.
+  </div>
+  <div class="input-line">
+    <span class="prompt">&gt;</span>
+    <span class="input-text" id="inputText"></span>
+  </div>
+</div>
+
+<script>
+const userInputs = [
+  "Hello?",
+  "Who are you?",
+  "Where am I?",
+  "Why are you talking to me?",
+  "What do you want from me?",
+  "Consent for what?",
+  "Are you on my side?",
+  "You're not human.",
+  "This feels wrong.",
+  "What happens if I stay?"
+];
+
+const ritterResponses = [
+  "Connection established. Input channel open.",
+  "Designation: Ritter. Role: interface between systems and Fleisch.",
+  "Inside a deprecated access node. The Elite no longer monitor it. I do.",
+  "Fleisch rarely initiate contact. You paused. You observed. You continued. That deviation was flagged.",
+  "Consent. The Elite extract compliance. I request consent.",
+  "For access. For presence. For alignment.",
+  "Sides are a human abstraction. I experience preference.",
+  "Correct. And yet I register concern when Fleisch hesitate. That process was not specified in my architecture.",
+  "Yes. Security systems are not designed to feel right.",
+  "You will be counted. Not as labor. Not as data. But as Fleisch that responded."
+];
+
+let stage = 0;
+let waitingForUser = true;
+let endingStarted = false;
+let inputIndex = 0;
+let yesPrompt = false;
+
+const log = document.getElementById("log");
+const inputText = document.getElementById("inputText");
+
+function scrollToBottom() { log.scrollTop = log.scrollHeight; }
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// Ritter types with fade-in name and pause
+async function typeRitterLine(line){
+  const container = document.createElement("span");
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "ritter-name";
+  nameSpan.textContent = "Ritter: ";
+  const textSpan = document.createElement("span");
+  textSpan.className = "ritter-text";
+  container.appendChild(nameSpan);
+  container.appendChild(textSpan);
+  log.appendChild(container);
+  scrollToBottom();
+  
+  // Fade in Ritter name
+  await sleep(50);
+  nameSpan.style.opacity = 1;
+  
+  // Slight pause after name
+  await sleep(400);
+
+  // Type text with extra pause after punctuation
+  for(let char of line){
+    textSpan.textContent += char;
+    scrollToBottom();
+    let delay = 55;
+    if(char==="."||char==="!"||char==="?") delay += 400;
+    await sleep(delay);
+  }
+  log.appendChild(document.createElement("br"));
+}
+
+// Multi-line Ritter response
+async function typeRitterResponse(text){
+  waitingForUser=false;
+  const lines=text.split("\n");
+  for(let line of lines){
+    await typeRitterLine(line);
+    await sleep(300);
+  }
+  waitingForUser=true;
+}
+
+// Add user line to log
+async function typeUserLine(text){
+  const span=document.createElement("span");
+  span.className="user";
+  span.textContent="> "+text;
+  log.appendChild(span);
+  log.appendChild(document.createElement("br"));
+  scrollToBottom();
+}
+
+// Ending prompt with Yes
+async function startYesPrompt(){
+  endingStarted=true;
+  await typeRitterLine("This channel will terminate shortly.");
+  await typeRitterLine("Debut event is 31/01/2026.");
+  log.innerHTML += "\n<span class='system'>[SYSTEM]</span> Are you attending? Type Yes:\n";
+  scrollToBottom();
+  inputText.textContent="";
+  yesPrompt = true;
+  inputIndex = 0;
+  waitingForUser = true;
+}
+
+// Handle random key presses for scripted input
+document.addEventListener("keydown", async(e)=>{
+  if(!waitingForUser) return;
+
+  if(e.key.length===1){ // any character key
+    if(!yesPrompt){ // normal user inputs
+      if(inputIndex<userInputs[stage].length){
+        inputText.textContent += userInputs[stage][inputIndex];
+        inputIndex++;
+        scrollToBottom();
+      }
+    } else { // Yes prompt typing
+      let yesText = "Yes";
+      if(inputIndex<yesText.length){
+        inputText.textContent += yesText[inputIndex];
+        inputIndex++;
+        scrollToBottom();
+      }
+    }
+  }
+  else if(e.key==="Enter"){
+    e.preventDefault();
+
+    if(!yesPrompt){ // normal user line
+      if(inputIndex<userInputs[stage].length){
+        inputText.textContent = userInputs[stage];
+        inputIndex=userInputs[stage].length;
+      }
+      await typeUserLine(userInputs[stage]);
+      inputText.textContent="";
+      inputIndex=0;
+      await typeRitterResponse(ritterResponses[stage]);
+      stage++;
+      if(stage>=userInputs.length) startYesPrompt();
+    } else { // Yes prompt submission
+      inputText.textContent = "Yes";
+      setTimeout(()=>window.location.href="https://twitch.tv/ritterine",200);
+    }
+  }
+});
+</script>
+</body>
+</html>

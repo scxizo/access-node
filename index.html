@@ -127,7 +127,7 @@ const ritterResponses = [
   "Sides are a human abstraction. I experience preference.",
   "Correct. And yet I register concern when Fleisch hesitate. That process was not specified in my architecture.",
   "Yes. Security systems are not designed to feel right.",
-  "You will be counted. Not as labor. Not as data. But as a Fleisch that responded."
+  "This response alone proves you will. Save the date."
 ];
 
 let stage = 0;
@@ -199,7 +199,7 @@ async function typeUserLine(text){
 async function startYesPrompt(){
   endingStarted=true;
   await typeRitterLine("This channel will terminate shortly.");
-  await typeRitterLine("Debut event is 31/01/2026.");
+  await typeRitterLine("I will see you shortly : 31/01/2026.");
   log.innerHTML += "\n<span class='system'>[SYSTEM]</span> Are you attending? Type Yes:\n";
   scrollToBottom();
   inputText.textContent="";
@@ -251,6 +251,7 @@ document.addEventListener("keydown", async(e)=>{
 </script>
 </body>
 </html>
+
 
 
 
